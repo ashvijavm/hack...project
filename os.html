@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Seat Allocation System</title>
+    <style>
+        /* Global styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .floor-plan {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .seat {
+            width: 80px;
+            height: 80px;
+            background-color: #ccc;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        .seat:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .seat-booked {
+            background-color: #FF6347;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .seat-confirmed {
+            background-color: #FFD700;
+            color: black;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 10px auto;
+        }
+
+        .confirmation-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Animations */
+        .fadeIn {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Office Seat Allocation System</h1>
+</header>
+
+<div class="container">
+    <!-- Login Section -->
+    <div id="login-section" class="fadeIn">
+        <h2>Login</h2>
+        <input id="employee-id" class="form-input" type="text" placeholder="Enter Employee ID" />
+        <input id="employee-password" class="form-input" type="password" placeholder="Enter Password" />
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Office Selection Section -->
+    <div id="office-selection-section" style="display: none;" class="fadeIn">
+        <h2>Select Office Location</h2>
+        <select id="office-location" class="form-input">
+            <option value="Office 1">Office 1</option>
+            <option value="Office 2">Office 2</option>
+            <option value="Office 3">Office 3</option>
+        </select>
+        <button onclick="showSeatLayout()">Next</button>
+    </div>
+
+    <!-- Floor Plan and Seat Selection -->
+    <div id="seat-layout-section" style="display: none;">
+        <h2>Choose Your Seat</h2>
+        <div id="floor-plan" class="floor-plan"></div>
+        <button id="confirm-booking" onclick="confirmBooking()" style="display: none;">Confirm Booking</button>
+    </div>
+
+    <!-- QR Code & Confirmation -->
+    <div id="qr-code-section" style="display: none;" class="qr-code-container">
+        <h2>Scan Your QR Code</h2>
+        <img id="qr-code" class="qr-code" src="" alt="QR Code" />
+        <button onclick="scanQRCode()">Scan QR Code</button>
+    </div>
+
+    <div id="confirmation-section" class="confirmation-container" style="display: none;">
+        <h3>Your Seat is Confirmed!</h3>
+        <p>Seat Number: <span id="confirmed-seat"></span></p>
+    </div>
+</div>
+
+<script>
+    // Simulating user data
+    const seats = {
+        'Office 1': [
+            { seatNumber: '1', status: 'available' },
+            { seatNumber: '2', status: 'available' },
+            { seatNumber: '3', status: 'booked' }
+        ],
+        'Office 2': [
+            { seatNumber: '1', status: 'available' },
+            { seatNumber: '2', status: 'booked' },
+            { seatNumber: '3', status: 'available' }
+        ],
+        'Office 3': [
+            { seatNumber: '1', status: 'available' },
+            { seatNumber: '2', status: 'booked' },
+            { seatNumber: '3', status: 'available' }
+        ]
+    };
+
+    let selectedSeat = '';
+    let officeLocation = '';
+
+    function login() {
+        const employeeId = document.getElementById('employee-id').value;
+        const password = document.getElementById('employee-password').value;
+        if (employeeId && password) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('office-selection-section').style.display = 'block';
+        }
+    }
+
+    function showSeatLayout() {
+        officeLocation = document.getElementById('office-location').value;
+        const floorPlanDiv = document.getElementById('floor-plan');
+        floorPlanDiv.innerHTML = '';
+        seats[officeLocation].forEach(seat => {
+            const seatDiv = document.createElement('div');
+            seatDiv.className = 'seat ' + (seat.status === 'booked' ? 'seat-booked' : '');
+            seatDiv.innerHTML = seat.seatNumber;
+            seatDiv.onclick = function () { selectSeat(seat) };
+            floorPlanDiv.appendChild(seatDiv);
+        });
+        document.getElementById('office-selection-section').style.display = 'none';
+        document.getElementById('seat-layout-section').style.display = 'block';
+    }
+
+    function selectSeat(seat) {
+        if (seat.status === 'booked') return;
+        selectedSeat = seat.seatNumber;
+        document.querySelectorAll('.seat').forEach(s => s.classList.remove('seat-confirmed'));
+        event.target.classList.add('seat-confirmed');
+        document.getElementById('confirm-booking').style.display = 'block';
+    }
+
+    function confirmBooking() {
+        if (selectedSeat) {
+            seats[officeLocation].find(seat => seat.seatNumber === selectedSeat).status = 'booked';
+            document.getElementById('seat-layout-section').style.display = 'none';
+            document.getElementById('qr-code-section').style.display = 'block';
+            document.getElementById('qr-code').src = `https://api.qrserver.com/v1/create-qr-code/?data=Seat${selectedSeat}&size=200x200`;
+            document.getElementById('confirmation-section').style.display = 'block';
+            document.getElementById('confirmed-seat').innerText = selectedSeat;
+        }
+    }
+
+    function scanQRCode() {
+        alert(`You scanned the QR Code for Seat ${selectedSeat}. The seat is now marked as occupied.`);
+    }
+</script>
+
+</body>
+</html>
